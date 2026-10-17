@@ -4,7 +4,21 @@ export
 
 .PHONY: up down restart build logs ps \
         migrate-up migrate-down migrate-status \
-        clean
+        clean \
+		run build test clean
+
+# Go
+run:
+	go run ./cmd/api
+
+build:
+	go build -o bin/api ./cmd/api
+
+test:
+	go test ./...
+
+clean:
+	rm -rf bin/
 
 # Docker Compose
 up:
