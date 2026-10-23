@@ -1,4 +1,4 @@
-package api
+package httpapi
 
 import (
 	"context"
@@ -25,10 +25,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /healthz", s.healthz)
 	mux.HandleFunc("GET /readyz", s.readyz)
 
-	mux.HandleFunc("POST /problems", s.createProblem)
-	mux.HandleFunc("GET /problems", s.listProblems)
-	mux.HandleFunc("GET /problems/{id}", s.getProblem)
-	mux.HandleFunc("DELETE /problems/{id}", s.deleteProblem)
+	mux.HandleFunc("POST /problems", s.handle(s.createProblem))
+	mux.HandleFunc("GET /problems", s.handle(s.listProblems))
+	mux.HandleFunc("GET /problems/{id}", s.handle(s.getProblem))
+	mux.HandleFunc("DELETE /problems/{id}", s.handle(s.deleteProblem))
 
 	return s.requestID(s.logRequests(s.recoverPanics(mux)))
 }

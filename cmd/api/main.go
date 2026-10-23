@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/souruking/route-planner/internal/api"
+	api "github.com/souruking/route-planner/internal/httpapi"
 	"github.com/souruking/route-planner/internal/store"
 )
 
