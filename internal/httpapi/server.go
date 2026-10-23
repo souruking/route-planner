@@ -4,19 +4,35 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+
+	"github.com/google/uuid"
+
+	"github.com/souruking/route-planner/internal/domain"
+	"github.com/souruking/route-planner/internal/store"
 )
 
+// Pinger is what readiness checks need from the database.
 type Pinger interface {
 	Ping(ctx context.Context) error
 }
 
-type Server struct {
-	db  Pinger
-	log *slog.Logger
+// ProblemStore is what the problem handlers need from storage.
+// *store.Store satisfies it; tests use an in-memory fake.
+type ProblemStore interface {
+	CreateProblem(ctx context.Context, p domain.NewProblem) (domain.Problem, error)
+	GetProblem(ctx context.Context, id uuid.UUID) (domain.Problem, error)
+	ListProblems(ctx context.Context, after *store.Cursor, limit int) ([]domain.ProblemSummary, *store.Cursor, error)
+	DeleteProblem(ctx context.Context, id uuid.UUID) error
 }
 
-func New(db Pinger, log *slog.Logger) *Server {
-	return &Server{db: db, log: log}
+type Server struct {
+	db       Pinger
+	problems ProblemStore
+	log      *slog.Logger
+}
+
+func New(db Pinger, problems ProblemStore, log *slog.Logger) *Server {
+	return &Server{db: db, problems: problems, log: log}
 }
 
 func (s *Server) Routes() http.Handler {

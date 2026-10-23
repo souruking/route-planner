@@ -2,10 +2,12 @@ include .env
 export
 
 
-.PHONY: up down restart build logs ps \
+.PHONY: up down restart compose-build logs ps \
         migrate-up migrate-down migrate-status \
         clean \
-		run build test clean
+		run build test clean \
+		test-integration \
+		fmt check
 
 # Go
 run:
@@ -30,7 +32,7 @@ down:
 restart:
 	docker compose restart
 
-build:
+compose-build:
 	docker compose build
 
 logs:
@@ -52,3 +54,31 @@ migrate-status:
 # Remove containers and volumes
 clean: 
 	docker compose down -v --remove-orphans
+
+# Testing
+test-integration:
+	TEST_DATABASE_URL="$(TEST_DB)" go test -count=1 ./...
+
+cover:
+	TEST_DATABASE_URL="$(TEST_DB)" go test -p 1 -count=1 -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out | tail -1
+	go tool cover -html=coverage.out -o coverage.htm
+
+# Checking
+fmt:
+	gofmt -w .
+
+check:
+	@echo "==> gofmt"
+	@test -z "$$(gofmt -l .)" || (echo "Unformatted files (run 'make fmt'):"; gofmt -l .; exit 1)
+	@echo "==> go vet"
+	@go vet ./...
+	@echo "==> go mod tidy"
+	@go mod tidy -diff
+	@echo "==> staticcheck"
+	@staticcheck ./...
+	@echo "==> build"
+	@go build ./...
+	@echo "==> tests (race, with database)"
+	@TEST_DATABASE_URL="$(TEST_DB)" go test -p 1 -race -count=1 ./...
+	@echo "All checks passed."

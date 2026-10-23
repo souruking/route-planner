@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -29,6 +30,10 @@ type fakePinger struct {
 func (f *fakePinger) Ping(ctx context.Context) error {
 	f.calls++
 	return f.err
+}
+
+func decodeJSONBody(resp *http.Response, dst any) error {
+	return json.NewDecoder(resp.Body).Decode(dst)
 }
 
 // decodeErrorBody parses a standard error response or fails the test.

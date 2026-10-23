@@ -10,7 +10,7 @@ import (
 )
 
 func TestRequestID(t *testing.T) {
-	s := New(&fakePinger{}, discardLogger())
+	s := New(&fakePinger{}, newFakeStore(), discardLogger())
 
 	// Captures the ID the handler sees in its context.
 	var seen string
@@ -104,7 +104,7 @@ func TestLogRequests(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			s := New(&fakePinger{}, bufferLogger(&buf))
+			s := New(&fakePinger{}, newFakeStore(), bufferLogger(&buf))
 
 			h := s.requestID(s.logRequests(tt.handler))
 			w := httptest.NewRecorder()
@@ -138,7 +138,7 @@ func TestLogRequests(t *testing.T) {
 func TestRecoverPanics(t *testing.T) {
 	t.Run("panic becomes 500 and is logged", func(t *testing.T) {
 		var buf bytes.Buffer
-		s := New(&fakePinger{}, bufferLogger(&buf))
+		s := New(&fakePinger{}, newFakeStore(), bufferLogger(&buf))
 
 		h := s.recoverPanics(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			panic("boom")
@@ -158,7 +158,7 @@ func TestRecoverPanics(t *testing.T) {
 	})
 
 	t.Run("http.ErrAbortHandler is re-panicked", func(t *testing.T) {
-		s := New(&fakePinger{}, discardLogger())
+		s := New(&fakePinger{}, newFakeStore(), discardLogger())
 		h := s.recoverPanics(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			panic(http.ErrAbortHandler)
 		}))
@@ -173,7 +173,7 @@ func TestRecoverPanics(t *testing.T) {
 	})
 
 	t.Run("no panic passes through untouched", func(t *testing.T) {
-		s := New(&fakePinger{}, discardLogger())
+		s := New(&fakePinger{}, newFakeStore(), discardLogger())
 		h := s.recoverPanics(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusTeapot)
 		}))

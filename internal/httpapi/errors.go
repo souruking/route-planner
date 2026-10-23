@@ -41,6 +41,16 @@ func errInvalidJSON(message string, fields ...FieldError) *Error {
 	}
 }
 
+// errInvalidParam is for bad query parameters, e.g. ?limit=abc.
+func errInvalidParam(field, message string) *Error {
+	return &Error{
+		Status:  http.StatusBadRequest,
+		Code:    "invalid_parameter",
+		Message: "invalid query parameter",
+		Fields:  []FieldError{{Field: field, Message: message}},
+	}
+}
+
 func errValidation(fields []FieldError) *Error {
 	return &Error{
 		Status:  http.StatusUnprocessableEntity,

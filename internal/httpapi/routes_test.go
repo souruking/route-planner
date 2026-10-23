@@ -18,15 +18,15 @@ func TestRoutes(t *testing.T) {
 	}{
 		{"healthz", http.MethodGet, "/healthz", http.StatusOK, false},
 		{"readyz", http.MethodGet, "/readyz", http.StatusOK, false},
-		{"create problem stub", http.MethodPost, "/problems", http.StatusNotImplemented, true},
-		{"list problems stub", http.MethodGet, "/problems", http.StatusNotImplemented, true},
-		{"get problem stub", http.MethodGet, "/problems/123", http.StatusNotImplemented, true},
-		{"delete problem stub", http.MethodDelete, "/problems/123", http.StatusNotImplemented, true},
+		{"create problem with empty body", http.MethodPost, "/problems", http.StatusBadRequest, true},
+		{"list problems", http.MethodGet, "/problems", http.StatusOK, false},
+		{"get unknown problem", http.MethodGet, "/problems/123", http.StatusNotFound, true},
+		{"delete unknown problem", http.MethodDelete, "/problems/123", http.StatusNotFound, true},
 		{"unknown path", http.MethodGet, "/nope", http.StatusNotFound, false},
 		{"wrong method", http.MethodPut, "/problems", http.StatusMethodNotAllowed, false},
 	}
 
-	s := New(&fakePinger{}, discardLogger())
+	s := New(&fakePinger{}, newFakeStore(), discardLogger())
 	handler := s.Routes()
 
 	for _, tt := range tests {
@@ -52,7 +52,7 @@ func TestRoutes(t *testing.T) {
 }
 
 func TestMethodNotAllowedListsAllowedMethods(t *testing.T) {
-	s := New(&fakePinger{}, discardLogger())
+	s := New(&fakePinger{}, newFakeStore(), discardLogger())
 	w := httptest.NewRecorder()
 	s.Routes().ServeHTTP(w, httptest.NewRequest(http.MethodPut, "/problems", nil))
 

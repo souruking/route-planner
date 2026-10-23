@@ -69,7 +69,7 @@ func TestDecodeJSON(t *testing.T) {
 }
 
 func TestWriteErrorHidesInternalErrors(t *testing.T) {
-	s := New(nil, discardLogger())
+	s := New(nil, newFakeStore(), discardLogger())
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 

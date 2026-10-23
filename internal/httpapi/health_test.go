@@ -9,7 +9,7 @@ import (
 
 func TestHealthz(t *testing.T) {
 	db := &fakePinger{err: errors.New("db down")}
-	s := New(db, discardLogger())
+	s := New(db, newFakeStore(), discardLogger())
 
 	w := httptest.NewRecorder()
 	s.Routes().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/healthz", nil))
@@ -36,7 +36,7 @@ func TestReadyz(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := &fakePinger{err: tt.pingErr}
-			s := New(db, discardLogger())
+			s := New(db, newFakeStore(), discardLogger())
 
 			w := httptest.NewRecorder()
 			s.Routes().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/readyz", nil))

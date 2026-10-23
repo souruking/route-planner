@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	api "github.com/souruking/route-planner/internal/httpapi"
+	"github.com/souruking/route-planner/internal/httpapi"
 	"github.com/souruking/route-planner/internal/store"
 )
 
@@ -90,7 +90,7 @@ func run(logger *slog.Logger) error {
 		logger.Info("database migrations completed")
 	}
 
-	api := api.New(pool, logger)
+	api := httpapi.New(pool, store.New(pool), logger)
 
 	server := &http.Server{
 		Addr:              cfg.httpAddr,

@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/souruking/route-planner/internal/domain"
+	"github.com/souruking/route-planner/internal/store"
 )
 
 // writeJSON encodes v as JSON with the given status code.
@@ -28,18 +31,41 @@ type errorPayload struct {
 	RequestID string       `json:"request_id,omitempty"`
 }
 
-// writeError is the single place where errors become HTTP responses.
-// Known *Error values are sent as-is; anything else is logged and hidden behind a 500.
-func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
+// toAPIError translates errors from other packages into *Error.
+// This is the only place that knows how domain (and later store) errors map to HTTP.
+func toAPIError(err error) *Error {
 	var apiErr *Error
-	if !errors.As(err, &apiErr) {
-		apiErr = &Error{
-			Status:  http.StatusInternalServerError,
-			Code:    "internal_error",
-			Message: "internal server error",
-			Err:     err,
-		}
+	if errors.As(err, &apiErr) {
+		return apiErr
 	}
+
+	var vErr *domain.ValidationError
+	if errors.As(err, &vErr) {
+		fields := make([]FieldError, len(vErr.Fields))
+		for i, f := range vErr.Fields {
+			fields[i] = FieldError{Field: f.Field, Message: f.Message}
+		}
+		return errValidation(fields)
+	}
+
+	// Safety net: handlers translate ErrNotFound themselves to name the resource,
+	// but one that forgets still produces a 404 rather than a 500.
+	if errors.Is(err, store.ErrNotFound) {
+		return errNotFound("resource")
+	}
+
+	return &Error{
+		Status:  http.StatusInternalServerError,
+		Code:    "internal_error",
+		Message: "internal server error",
+		Err:     err,
+	}
+}
+
+// writeError is the single place where errors become HTTP responses.
+// Known errors are sent as-is; anything else is logged and hidden behind a 500.
+func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
+	apiErr := toAPIError(err)
 
 	if apiErr.Status >= 500 {
 		s.log.ErrorContext(r.Context(), "request failed",

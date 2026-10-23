@@ -77,7 +77,7 @@ func TestWriteError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			s := New(&fakePinger{}, bufferLogger(&buf))
+			s := New(&fakePinger{}, newFakeStore(), bufferLogger(&buf))
 
 			// Run through requestID so the body should carry an ID.
 			h := s.requestID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +110,7 @@ func TestWriteError(t *testing.T) {
 }
 
 func TestHandleAdapter(t *testing.T) {
-	s := New(&fakePinger{}, discardLogger())
+	s := New(&fakePinger{}, newFakeStore(), discardLogger())
 
 	t.Run("returned error is written", func(t *testing.T) {
 		h := s.handle(func(w http.ResponseWriter, r *http.Request) error {
